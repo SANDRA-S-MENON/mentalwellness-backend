@@ -70,6 +70,35 @@ app.post("/signup", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+
+//user sign in api
+app.post("/signin",async(req,res)=>{
+
+    let input=req.body
+    let result=userModel.find({Email:req.body.Email}).then(
+        (items)=>{
+            if (items.length>0) {
+                const passwordValidator=bcrypt.compareSync(req.body.Password,items[0].Password)
+                if(passwordValidator){
+                    jsonwebtoken.sign({Email:req.body.Email},"mentalwellnessapp",{expiresIn:"3d"},
+                        (error,token)=>{
+                            if (error) {
+                                res.json({"status":"error","error":error})
+                            } else {
+                                res.json({"status":"success","token":token,"userId":items[0]._id})
+                            }
+                        }
+                    )
+            } else {
+                    res.json({"status":"incorrect password"})
+            }
+        }else{
+            res.json({"status":"invalid email id"})
+        }
+    }
+    ).catch()
+
+})
 // start the server
 app.listen(3030,()=>{
     console.log("server started")
