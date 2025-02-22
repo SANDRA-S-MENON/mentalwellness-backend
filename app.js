@@ -64,10 +64,10 @@ app.post("/signup", async (req, res) => {
         // Save the new user to the database
         await newUser.save();
 
-        res.status(201).json({ message: "User registered successfully." });
+        res.status(201).json({ status: "success", message: "User registered successfully." });
     } catch (error) {
         console.error("Error during signup:", error);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ status: "success", message: "Server error" });
     }
 });
 
