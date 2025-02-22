@@ -133,7 +133,48 @@ app.post("/adminlogin", async (req, res) => {
     }
 });
 
+// Admin Signup Route
+app.post("/adminsignup", async (req, res) => {
+    try {
+        const { username, password } = req.body;
 
+        // Check if admin already exists
+        let existingAdmin = await adminModel.findOne({ password });
+        if (existingAdmin) {
+            return res.status(400).json({ status: "password already exists" });
+        }
+
+        // Hash the password before saving
+        const salt = bcrypt.genSaltSync(10);
+        const hashedPassword = bcrypt.hashSync(password, salt);
+
+        // Create new admin
+        const newAdmin = new adminModel({
+            username,
+            password: hashedPassword
+        });
+
+        // Save to database
+        await newAdmin.save();
+
+        // Generate JWT Token
+        const token = jsonwebtoken.sign(
+            { username: newAdmin.username, role: "admin" },
+            "mentalwellness-secret", // Store in .env for security
+            { expiresIn: "1d" }
+        );
+
+        res.json({
+            status: "Success",
+            token,
+            adminId: newAdmin._id,
+            message: "Admin registered successfully"
+        });
+
+    } catch (error) {
+        res.status(500).json({ status: "Error", error: error.message });
+    }
+});
 // start the server
 app.listen(3030,()=>{
     console.log("server started")
