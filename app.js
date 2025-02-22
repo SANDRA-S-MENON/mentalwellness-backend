@@ -6,7 +6,7 @@ const jsonwebtoken = require("jsonwebtoken")
 
 const userModel = require("./models/users"); // Adjust path to your model
 
-
+const adminModel = require("./models/admin")
 
 
 let app =express()
@@ -64,10 +64,10 @@ app.post("/signup", async (req, res) => {
         // Save the new user to the database
         await newUser.save();
 
-        res.status(201).json({ message: "User registered successfully." });
+        res.status(201).json({ status: "success", message: "User registered successfully." });
     } catch (error) {
         console.error("Error during signup:", error);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ status: "success", message: "Server error" });
     }
 });
 
@@ -99,6 +99,41 @@ app.post("/signin",async(req,res)=>{
     ).catch()
 
 })
+
+
+// api for admin login
+
+app.post("/adminlogin", async (req, res) => {
+    try {
+        let { username, password } = req.body;
+
+        // Find admin by username
+        let admin = await adminModel.findOne({ username });
+
+        if (!admin) {
+            return res.json({ status: "Invalid Username" });
+        }
+
+        // Compare the password
+        const passwordValidator = bcrypt.compareSync(password, admin.password);
+
+        if (!passwordValidator) {
+            return res.json({ status: "Incorrect Password" });
+        }
+
+        // Generate JWT token
+        jsonwebtoken.sign({ username }, "mentalwellness", { expiresIn: "1d" }, (error, token) => {
+            if (error) {
+                return res.json({ status: "Error", error });
+            }
+            return res.json({ status: "Success", token, adminId: admin._id });
+        });
+    } catch (error) {
+        res.json({ status: "Error", error: error.message });
+    }
+});
+
+
 // start the server
 app.listen(3030,()=>{
     console.log("server started")
